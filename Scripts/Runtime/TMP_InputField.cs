@@ -28,7 +28,8 @@ namespace TMPro
         ISubmitHandler,
         ICanvasElement,
         ILayoutElement,
-        IScrollHandler
+        IScrollHandler,
+        IPointerMoveHandler
     {
 
         // Setting the content type acts as a shortcut for setting a combination of InputType, CharacterValidation, LineType, and TouchScreenKeyboardType
@@ -1757,6 +1758,13 @@ namespace TMPro
             m_UpdateDrag = false;
         }
 
+        private bool _cursorMovedAfterClick;
+
+        public void OnPointerMove(PointerEventData eventData)
+        {
+            _cursorMovedAfterClick = true;
+        }
+
         public override void OnPointerDown(PointerEventData eventData)
         {
             if (!MayDrag(eventData))
@@ -1788,7 +1796,8 @@ namespace TMPro
             float timeStamp = Time.unscaledTime;
 
             if (m_PointerDownClickStartTime + m_DoubleClickDelay > timeStamp)
-                isDoubleClick = true;
+                isDoubleClick = !_cursorMovedAfterClick;
+            _cursorMovedAfterClick = false;
 
             m_PointerDownClickStartTime = timeStamp;
 
@@ -1870,15 +1879,9 @@ namespace TMPro
 
                         stringPositionInternal = m_TextComponent.textInfo.characterInfo[caretPositionInternal].index;
                         stringSelectPositionInternal = m_TextComponent.textInfo.characterInfo[caretSelectPositionInternal - 1].index + m_TextComponent.textInfo.characterInfo[caretSelectPositionInternal - 1].stringLength;
-                    }
-                    else
+                    } else
                     {
-                        // Select current character
-                        caretPositionInternal = insertionIndex;
-                        caretSelectPositionInternal = caretPositionInternal + 1;
-
-                        stringPositionInternal = m_TextComponent.textInfo.characterInfo[insertionIndex].index;
-                        stringSelectPositionInternal = stringPositionInternal + m_TextComponent.textInfo.characterInfo[insertionIndex].stringLength;
+                        caretPositionInternal = caretSelectPositionInternal = GetCaretPositionFromStringIndex(stringPositionInternal);
                     }
                 }
                 else
